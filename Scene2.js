@@ -12,34 +12,6 @@ class Scene2 extends Phaser.Scene {
     this.ship2 = this.add.sprite(config.width / 2, config.height / 2, "ship2");
     this.ship3 = this.add.sprite(config.width / 2 + 50, config.height / 2, "ship3");
 
-    
-    this.anims.create({
-      key: "ship1_anim",
-      frames: this.anims.generateFrameNumbers("ship"),
-      frameRate: 20,
-      repeat: -1
-    });
-    this.anims.create({
-      key: "ship2_anim",
-      frames: this.anims.generateFrameNumbers("ship2"),
-      frameRate: 20,
-      repeat: -1
-    });
-    this.anims.create({
-      key: "ship3_anim",
-      frames: this.anims.generateFrameNumbers("ship3"),
-      frameRate: 20,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: "explode",
-      frames: this.anims.generateFrameNumbers("explosion"),
-      frameRate: 20,
-      repeat: 0,
-      hideOnComplete: true
-    });
-
     this.ship1.play("ship1_anim");
     this.ship2.play("ship2_anim");
     this.ship3.play("ship3_anim");
@@ -55,32 +27,13 @@ class Scene2 extends Phaser.Scene {
       fill: "yellow"
     });
 
-    this.anims.create({
-      key: "red",
-      frames: this.anims.generateFrameNumbers("power-up", {
-        start: 0,
-        end: 1
-      }),
-      frameRate: 20,
-      repeat: -1
-    })
-    this.anims.create({
-      key: "gray",
-      frames: this.anims.generateFrameNumbers("power-up", {
-        start: 2,
-        end: 3
-      }),
-      frameRate: 20,
-      repeat: -1
-    })
-
     this.physics.world.setBoundsCollision();
 
     this.powerUps=this.physics.add.group();
 
-    var maxObjects=4;
-    for (var i=0; i <= maxObjects; i++) {
-      var powerUp = this.physics.add.sprite(16, 16, "power-up");
+    // for (var i=0; i <= gameSettings.maxPowerups; i++) {
+    for (var i=0; i <= gameSettings.maxPowerups; i++) {
+        var powerUp = this.physics.add.sprite(16, 16, "power-up");
       this.powerUps.add(powerUp);
       powerUp.setRandomPosition(0,0,game.config.width, game.config.height);
 
@@ -90,11 +43,17 @@ class Scene2 extends Phaser.Scene {
         powerUp.play("gray");
       }
 
-      powerUp.setVelocity(100,100);
+      powerUp.setVelocity(gameSettings.powerUpVel, gameSettings.powerUpVel);
       powerUp.setCollideWorldBounds(true);
       powerUp.setBounce(1);
     }
 
+    this.player = this.physics.add.sprite(config.width/2-8, config.height-64, "player");
+    this.player.play("thrust");
+    this.cursorKeys = this.input.keyboard.createCursorKeys();
+    this.player.setCollideWorldBounds(true);
+
+    this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   }
 
   update() {
@@ -105,8 +64,30 @@ class Scene2 extends Phaser.Scene {
 
     this.background.tilePositionY -= 0.5;
 
+    this.movePlayerManager();
+
+    if(Phaser.Input.Keyboard.JustDown(this.spacebar)){
+      console.log("Fire!");
+    }
+
   }
 
+  movePlayerManager(){
+    this.player.setVelocity(0);
+
+    if(this.cursorKeys.left.isDown){
+      this.player.setVelocityX(-gameSettings.playerSpeed)
+    }else if(this.cursorKeys.right.isDown){
+      this.player.setVelocityX(gameSettings.playerSpeed)
+    }
+
+    if(this.cursorKeys.up.isDown){
+      this.player.setVelocityY(-gameSettings.playerSpeed)
+    }else if(this.cursorKeys.down.isDown){
+      this.player.setVelocityY(gameSettings.playerSpeed)
+    }
+
+  }
   moveShip(ship, speed) {
     ship.y += speed;
     if (ship.y > config.height) {
@@ -120,7 +101,6 @@ class Scene2 extends Phaser.Scene {
     ship.x = randomX;
   }
 
-  // 1.3
   destroyShip(pointer, gameObject) {
     gameObject.setTexture("explosion");
     gameObject.play("explode");
